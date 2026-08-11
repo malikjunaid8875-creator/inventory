@@ -43,14 +43,30 @@ $result = $conn->query($sql);
     <!-- Main Content Container -->
     <main class="main-container">
 
-        <!-- Dynamic Success Message Alert -->
-        <?php if (isset($_GET['status']) && $_GET['status'] === 'success'): ?>
-            <div class="card alert-dismissible" style="background-color: var(--success-bg); color: var(--success-text); border: 1px solid #bbf7d0; padding: 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; border-radius: var(--radius-sm);">
-                <i class="fa-solid fa-circle-check" style="font-size: 1.2rem;"></i>
-                <div>
-                    <strong>Success!</strong> Product was added to the inventory database successfully.
+        <!-- Dynamic Status Notification Banners -->
+        <?php if (isset($_GET['status'])): ?>
+            <?php if ($_GET['status'] === 'success'): ?>
+                <div class="card alert-dismissible" style="background-color: var(--success-bg); color: var(--success-text); border: 1px solid #bbf7d0; padding: 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; border-radius: var(--radius-sm);">
+                    <i class="fa-solid fa-circle-check" style="font-size: 1.2rem;"></i>
+                    <div>
+                        <strong>Success!</strong> Product was added to the inventory database successfully.
+                    </div>
                 </div>
-            </div>
+            <?php elseif ($_GET['status'] === 'deleted'): ?>
+                <div class="card alert-dismissible" style="background-color: var(--danger-bg); color: var(--danger-text); border: 1px solid #fca5a5; padding: 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; border-radius: var(--radius-sm);">
+                    <i class="fa-solid fa-trash-can" style="font-size: 1.2rem;"></i>
+                    <div>
+                        <strong>Product Deleted!</strong> The item has been permanently removed from inventory.
+                    </div>
+                </div>
+            <?php elseif ($_GET['status'] === 'notfound'): ?>
+                <div class="card alert-dismissible" style="background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a; padding: 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; border-radius: var(--radius-sm);">
+                    <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.2rem;"></i>
+                    <div>
+                        <strong>Not Found!</strong> The requested product could not be located in the database.
+                    </div>
+                </div>
+            <?php endif; ?>
         <?php endif; ?>
 
         <!-- Page Header & Action Bar -->
@@ -68,7 +84,7 @@ $result = $conn->query($sql);
         <div class="card" style="margin-bottom: 1.5rem;">
             <div style="display: flex; gap: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap;">
                 <div style="flex: 1; min-width: 250px; max-width: 400px;">
-                    <!-- Live Search Input (Connected to my-scripts.js) -->
+                    <!-- Live Search Input (Handled by assets/my-scripts.js) -->
                     <input 
                         type="text" 
                         id="table-search" 
@@ -103,7 +119,7 @@ $result = $conn->query($sql);
                         <?php if ($result && $result->num_rows > 0): ?>
                             <?php while ($row = $result->fetch_assoc()): ?>
                                 <?php
-                                    // Calculate stock badge status dynamically
+                                    // Dynamic stock badge logic
                                     $qty = (int) $row['quantity'];
                                     if ($qty === 0) {
                                         $badge_class = "badge-danger";
@@ -116,7 +132,7 @@ $result = $conn->query($sql);
                                         $status_text = "In Stock";
                                     }
 
-                                    // Fallback if category name is null
+                                    // Fallback for null categories
                                     $category_display = !empty($row['category_name']) ? $row['category_name'] : 'Uncategorized';
                                 ?>
                                 <tr>
@@ -127,17 +143,23 @@ $result = $conn->query($sql);
                                     <td>$<?php echo number_format($row['unit_price'], 2); ?></td>
                                     <td><span class="badge <?php echo $badge_class; ?>"><?php echo $status_text; ?></span></td>
                                     <td style="text-align: right;">
+                                        <!-- Edit Link -->
                                         <a href="edit-product.php?id=<?php echo $row['id']; ?>" class="btn" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; background: #e2e8f0; color: var(--text-primary);">
                                             <i class="fa-solid fa-pen-to-square"></i> Edit
                                         </a>
-                                        <a href="delete-product.php?id=<?php echo $row['id']; ?>" class="btn btn-delete" data-name="<?php echo htmlspecialchars($row['product_name']); ?>" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; background: var(--danger-bg); color: var(--danger-text);">
+                                        
+                                        <!-- Delete Link with JavaScript Confirmation -->
+                                        <a href="delete-product.php?id=<?php echo $row['id']; ?>" 
+                                           class="btn btn-delete" 
+                                           onclick="return confirm('Are you sure you want to delete \'<?php echo htmlspecialchars(addslashes($row['product_name'])); ?>\'?');" 
+                                           style="padding: 0.3rem 0.6rem; font-size: 0.8rem; background: var(--danger-bg); color: var(--danger-text);">
                                             <i class="fa-solid fa-trash"></i> Delete
                                         </a>
                                     </td>
                                 </tr>
                             <?php endwhile; ?>
                         <?php else: ?>
-                            <!-- Empty State Row when zero products exist in database -->
+                            <!-- Empty State Row when zero products exist in DB -->
                             <tr>
                                 <td colspan="7" style="text-align: center; padding: 2.5rem; color: var(--text-secondary);">
                                     <i class="fa-solid fa-box-open" style="font-size: 2rem; margin-bottom: 0.5rem; display: block; color: var(--border-color);"></i>
@@ -164,4 +186,5 @@ $result = $conn->query($sql);
     <script src="assets/my-scripts.js"></script>
 </body>
 </html>
+
 
